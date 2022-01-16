@@ -31,6 +31,14 @@ export default function Home() {
   // same object in the "universe", thus mutating it mutates all objects.
   const [answers, setAnswers] = useState<Answer[][]>(initArr);
 
+  function numOfLetterInWord(letter: string, word: string): number {
+    let count = 0;
+    for (let i = 0; i < word.length; i++) {
+      if (letter === word[i]) count += 1;
+    }
+    return count;
+  }
+
   // handle keyboard input...
   useEffect(() => {
     async function handleKeyDown(e: KeyboardEvent) {
@@ -63,8 +71,9 @@ export default function Home() {
           answers[tries].filter((answer) => answer.value !== "").length ===
             WORD.length
         ) {
-          // color the appropriate cells with set interval of .5 seconds.
           let nCorrect = 0;
+          // to check for repeating alphabets
+          let possiblyCorrectLetters = "";
           for (let i = 0; i < answers[tries].length; i++) {
             await delay(300);
             let letterToTest = answers[tries][i].value.toLowerCase();
@@ -75,12 +84,22 @@ export default function Home() {
                 newAnswer[tries][i].state = "correct";
                 return newAnswer;
               });
+              possiblyCorrectLetters += letterToTest;
             } else if (WORD.includes(letterToTest)) {
               setAnswers((a) => {
                 const newAnswer = [...a];
-                newAnswer[tries][i].state = "incorrect_position";
+                if (
+                  possiblyCorrectLetters.includes(letterToTest) &&
+                  numOfLetterInWord(letterToTest, possiblyCorrectLetters) !==
+                    numOfLetterInWord(letterToTest, WORD)
+                ) {
+                  newAnswer[tries][i].state = "incorrect_position";
+                } else {
+                  newAnswer[tries][i].state = "incorrect";
+                }
                 return newAnswer;
               });
+              possiblyCorrectLetters += letterToTest;
             } else {
               setAnswers((a) => {
                 const newAnswer = [...a];

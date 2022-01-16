@@ -27,9 +27,8 @@ export default function Home() {
   }, []);
   const [tries, setTries] = useState(0);
   const [cursor, setCursor] = useState(0);
-  // fun fact: I can't just do new Array(6).fill(BASE_VALUE) here because fill apparently points to the
-  // same object in the "universe", thus mutating it mutates all objects.
   const [answers, setAnswers] = useState<Answer[][]>(initArr);
+  const [gameOver, setGameOver] = useState(false);
 
   function numOfLetterInWord(letter: string, word: string): number {
     let count = 0;
@@ -39,7 +38,6 @@ export default function Home() {
     return count;
   }
 
-  // handle keyboard input...
   useEffect(() => {
     async function handleKeyDown(e: KeyboardEvent) {
       const letters = "abcdefghijklmnopqrstuvwxyz";
@@ -115,10 +113,12 @@ export default function Home() {
             if (tries < 5) {
               setCursor(0);
               setTries((t) => t + 1);
+            } else {
+              // game over, try again tomorrow...
+              setGameOver(true);
             }
           }
         }
-        // game over, try again tomorrow...
       }
     }
 
@@ -135,7 +135,7 @@ export default function Home() {
       <div className="pt-10" />
       {answers.map((answer, aId) => {
         return (
-          <div key={aId} className="flex gap-2 justify-center my-2">
+          <div key={aId} className="flex space-x-2 justify-center my-2">
             {answer.map((letter, lId) => {
               return (
                 <div

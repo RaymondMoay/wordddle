@@ -15,7 +15,6 @@ const BASE_ANSWER: Answer = {
 export default function Home() {
   const initArr = useMemo(() => {
     const initial: Answer[][] = new Array(6).fill("");
-    console.log("initialized");
     // initialize answers (0(6n))
     for (let i = 0; i < initial.length; i++) {
       let arr: Answer[] = [];
@@ -26,9 +25,10 @@ export default function Home() {
     }
     return initial;
   }, []);
-
   const [tries, setTries] = useState(0);
   const [cursor, setCursor] = useState(0);
+  // fun fact: I can't just do new Array(6).fill(BASE_VALUE) here because fill apparently points to the
+  // same object in the "universe", thus mutating it mutates all objects.
   const [answers, setAnswers] = useState<Answer[][]>(initArr);
 
   // handle keyboard input...
@@ -108,7 +108,7 @@ export default function Home() {
   }, [answers, cursor, tries]);
 
   return (
-    <div className="h-full w-full max-w-md mx-auto px-4">
+    <div className="h-full w-full max-w-md mx-auto px-4 animate-fade-in-down">
       <div className="text-center">
         <h1 className="text-4xl font-bold pt-5">WORDDDLE</h1>
         <h2 className="text-2xl">Level 1</h2>
@@ -125,11 +125,11 @@ export default function Home() {
                     tries === aId ? "border-gray-500" : "border-gray-300"
                   } rounded-[5px] text-3xl flex items-center justify-center ${
                     letter.state === "correct"
-                      ? "bg-green-300 border-green-300"
+                      ? "bg-green-300 border-green-300 animate-fade-in"
                       : letter.state === "incorrect_position"
-                      ? "bg-yellow-300 border-yellow-300"
+                      ? "bg-yellow-300 border-yellow-300 animate-fade-in"
                       : letter.state === "incorrect"
-                      ? "bg-gray-300"
+                      ? "bg-gray-300 animate-fade-in"
                       : "bg-white"
                   }`}
                 >

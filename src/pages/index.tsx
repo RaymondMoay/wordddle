@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [tries, setTries] = useState(0);
   const [answers, setAnswers] = useState([
     ["A", "P", "P", "L", "E"],
     ["", "", "", "", ""],
@@ -39,16 +40,18 @@ export default function Home() {
         <h2 className="text-2xl">Level 1</h2>
       </div>
       <div className="pt-10" />
-      {answers.map((answer, index) => {
+      {answers.map((answer, aId) => {
         return (
-          <div key={index} className="flex gap-2 justify-center my-2">
-            {answer.map((letter, index) => {
+          <div key={aId} className="flex gap-2 justify-center my-2">
+            {answer.map((letter, lId) => {
               return (
                 <div
-                  key={index}
-                  className="w-14 h-14 border border-gray-500 rounded-sm text-3xl flex items-center justify-center"
+                  key={lId}
+                  className={`w-14 h-14 border ${
+                    tries === aId ? "border-gray-500" : "border-gray-300"
+                  } rounded-sm text-3xl flex items-center justify-center`}
                 >
-                  {answer[index]}
+                  {letter}
                 </div>
               );
             })}

@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const [tries, setTries] = useState(0);
+  const [cursor, setCursor] = useState(0);
+  const [wordLength, setWordLength] = useState(5);
   const [answers, setAnswers] = useState([
-    ["A", "P", "P", "L", "E"],
+    ["", "", "", "", ""],
     ["", "", "", "", ""],
     ["", "", "", "", ""],
     ["", "", "", "", ""],
@@ -17,11 +19,27 @@ export default function Home() {
     function handleKeyDown(e: KeyboardEvent) {
       const letters = "abcdefghijklmnopqrstuvwxyz";
       if (letters.includes(e.key)) {
-        console.log(e.key);
+        setCursor((c) => {
+          if (c < wordLength) {
+            const newAnswers = [...answers];
+            newAnswers[tries][cursor] = e.key;
+            setAnswers(newAnswers);
+            return c + 1;
+          }
+          return wordLength;
+        });
       }
 
       if (e.key === "Backspace") {
-        console.log("Handle backspace");
+        setCursor((c) => {
+          if (c > 0) {
+            const newAnswers = [...answers];
+            newAnswers[tries][cursor - 1] = "";
+            setAnswers(newAnswers);
+            return c - 1;
+          }
+          return 0;
+        });
       }
 
       if (e.key === "Enter") {
@@ -31,7 +49,7 @@ export default function Home() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [wordLength, answers, cursor, tries]);
 
   return (
     <div className="h-full w-full max-w-md mx-auto px-4">
@@ -49,9 +67,9 @@ export default function Home() {
                   key={lId}
                   className={`w-14 h-14 border ${
                     tries === aId ? "border-gray-500" : "border-gray-300"
-                  } rounded-sm text-3xl flex items-center justify-center`}
+                  } rounded-[5px] text-3xl flex items-center justify-center`}
                 >
-                  {letter}
+                  {letter.toUpperCase()}
                 </div>
               );
             })}

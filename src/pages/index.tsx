@@ -1,55 +1,111 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { delay } from "../utils/delay";
+
+type Answer = {
+  value: string;
+  state: "correct" | "incorrect_position" | "incorrect" | null;
+};
+
+const WORD = "lunar"; // this should come from static props reading Excel's APIs
+const BASE_ANSWER: Answer = {
+  value: "",
+  state: null,
+};
 
 export default function Home() {
+  const initArr = useMemo(() => {
+    const initial: Answer[][] = new Array(6).fill("");
+    console.log("initialized");
+    // initialize answers (0(6n))
+    for (let i = 0; i < initial.length; i++) {
+      let arr: Answer[] = [];
+      for (let k = 0; k < WORD.length; k++) {
+        arr.push({ ...BASE_ANSWER });
+      }
+      initial[i] = arr;
+    }
+    return initial;
+  }, []);
+
   const [tries, setTries] = useState(0);
   const [cursor, setCursor] = useState(0);
-  const [wordLength, setWordLength] = useState(5);
-  const [answers, setAnswers] = useState([
-    ["", "", "", "", ""],
-    ["", "", "", "", ""],
-    ["", "", "", "", ""],
-    ["", "", "", "", ""],
-    ["", "", "", "", ""],
-    ["", "", "", "", ""],
-  ]);
+  const [answers, setAnswers] = useState<Answer[][]>(initArr);
 
   // handle keyboard input...
-
   useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
+    async function handleKeyDown(e: KeyboardEvent) {
       const letters = "abcdefghijklmnopqrstuvwxyz";
       if (letters.includes(e.key)) {
         setCursor((c) => {
-          if (c < wordLength) {
+          if (c < WORD.length) {
             const newAnswers = [...answers];
-            newAnswers[tries][cursor] = e.key;
+            newAnswers[tries][cursor].value = e.key;
             setAnswers(newAnswers);
             return c + 1;
           }
-          return wordLength;
+          return WORD.length;
         });
       }
-
       if (e.key === "Backspace") {
         setCursor((c) => {
           if (c > 0) {
             const newAnswers = [...answers];
-            newAnswers[tries][cursor - 1] = "";
+            newAnswers[tries][cursor - 1].value = "";
             setAnswers(newAnswers);
             return c - 1;
           }
           return 0;
         });
       }
-
       if (e.key === "Enter") {
-        console.log("Submit answer");
+        if (
+          tries <= 5 &&
+          answers[tries].filter((answer) => answer.value !== "").length ===
+            WORD.length
+        ) {
+          // color the appropriate cells with set interval of .5 seconds.
+          let nCorrect = 0;
+          for (let i = 0; i < answers[tries].length; i++) {
+            await delay(300);
+            let letterToTest = answers[tries][i].value.toLowerCase();
+            if (letterToTest === WORD[i]) {
+              nCorrect += 1;
+              setAnswers((a) => {
+                const newAnswer = [...a];
+                newAnswer[tries][i].state = "correct";
+                return newAnswer;
+              });
+            } else if (WORD.includes(letterToTest)) {
+              setAnswers((a) => {
+                const newAnswer = [...a];
+                newAnswer[tries][i].state = "incorrect_position";
+                return newAnswer;
+              });
+            } else {
+              setAnswers((a) => {
+                const newAnswer = [...a];
+                newAnswer[tries][i].state = "incorrect";
+                return newAnswer;
+              });
+            }
+          }
+          await delay(300);
+          if (nCorrect === WORD.length) {
+            // Correct! move on to the next level...
+          } else {
+            if (tries < 5) {
+              setCursor(0);
+              setTries((t) => t + 1);
+            }
+          }
+        }
+        // game over, try again tomorrow...
       }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [wordLength, answers, cursor, tries]);
+  }, [answers, cursor, tries]);
 
   return (
     <div className="h-full w-full max-w-md mx-auto px-4">
@@ -67,9 +123,17 @@ export default function Home() {
                   key={lId}
                   className={`w-14 h-14 border ${
                     tries === aId ? "border-gray-500" : "border-gray-300"
-                  } rounded-[5px] text-3xl flex items-center justify-center`}
+                  } rounded-[5px] text-3xl flex items-center justify-center ${
+                    letter.state === "correct"
+                      ? "bg-green-300 border-green-300"
+                      : letter.state === "incorrect_position"
+                      ? "bg-yellow-300 border-yellow-300"
+                      : letter.state === "incorrect"
+                      ? "bg-gray-300"
+                      : "bg-white"
+                  }`}
                 >
-                  {letter.toUpperCase()}
+                  {letter.value.toUpperCase()}
                 </div>
               );
             })}

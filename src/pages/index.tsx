@@ -11,7 +11,7 @@ export default function Home() {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <h1>Wordddle</h1>
+      <h1 className="text-center text-3xl">Wordddle</h1>
     </div>
   );
 }

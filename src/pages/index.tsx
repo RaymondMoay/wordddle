@@ -160,7 +160,9 @@ export default function Home() {
                 <div
                   key={lId}
                   className={`w-10 h-10 md:w-14 md:h-14 border ${
-                    tries === aId ? "border-gray-500" : "border-gray-300"
+                    tries === aId && animating === false
+                      ? "border-gray-500"
+                      : "border-gray-300"
                   } rounded-[5px] text-3xl flex items-center justify-center ${
                     letter.state === "correct"
                       ? "bg-green-300 border-green-300 animate-fade-in"

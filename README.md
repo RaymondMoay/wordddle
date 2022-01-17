@@ -19,6 +19,7 @@ Super simple tech stack and really just a react UI exercise here. A sunday-fun-d
 ## Todos:
 
 - [x] Move on to next level
+- [ ] Animate to next level
 - [ ] Get hint: removes 1 try.
 - [ ] Store past answers for summary page
 - [ ] Connect to GSheet API + getStaticProps to load data and regenerate everyday

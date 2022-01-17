@@ -1,47 +1,81 @@
-import { useEffect, useMemo, useState } from "react";
-import { delay } from "../utils/helpers";
+import { useEffect, useState } from "react";
+import {
+  delay,
+  generateInitialAnswers,
+  numberOfLetterInWord,
+} from "../utils/helpers";
+import type { Answer } from "../utils/types";
 
-type Answer = {
-  value: string;
-  state: "correct" | "incorrect_position" | "incorrect" | null;
-};
-
-const WORD = "lunar"; // this should come from static props reading Excel's APIs
-const WORDS = ["lunar", "toggle", "achieve", "academic"];
-const BASE_ANSWER: Answer = {
-  value: "",
-  state: null,
-};
+// WORDS should come from API fetch
+const WORDS = ["local", "toggle", "achieve", "academic"];
 
 export default function Home() {
-  const initArr = useMemo(() => {
-    const initial: Answer[][] = new Array(6).fill("");
-    // initialize answers (0(6n))
-    for (let i = 0; i < initial.length; i++) {
-      let arr: Answer[] = [];
-      for (let k = 0; k < WORD.length; k++) {
-        arr.push({ ...BASE_ANSWER });
-      }
-      initial[i] = arr;
-    }
-    return initial;
-  }, []);
   const [level, setLevel] = useState(0);
   const [tries, setTries] = useState(0);
   const [cursor, setCursor] = useState(0);
-  const [answers, setAnswers] = useState<Answer[][]>(initArr);
+  const [answers, setAnswers] = useState<Answer[][]>(
+    generateInitialAnswers(WORDS[level], 6)
+  );
+  const [animating, setAnimating] = useState(false);
   const [gameOver, setGameOver] = useState(false);
 
-  function numOfLetterInWord(letter: string, word: string): number {
-    let count = 0;
-    for (let i = 0; i < word.length; i++) {
-      if (letter === word[i]) count += 1;
+  // pure function here:
+  function checkAnswer(word: String, answer: Answer[]): Answer[] {
+    // create a final answer with NEW objects so we don't mutate the original state by accident.
+    let finalAnswer: Answer[] = answer.map((ans) => ({ ...ans }));
+    let remainingWord = "";
+    let checkedAnswerIdx = [];
+
+    // 1. Check all correct answers and remove them...
+    for (let i = 0; i < answer.length; i++) {
+      if (answer[i].value === word[i]) {
+        finalAnswer[i].state = "correct";
+        checkedAnswerIdx.push(i);
+      } else {
+        remainingWord += word[i];
+      }
     }
-    return count;
+    // 2. Remaining are either (2.1) outright wrong or (2.2) wrong position.
+    // 2.1 Remove all wrong answers.
+    for (let i = 0; i < answer.length; i++) {
+      if (
+        !checkedAnswerIdx.includes(i) &&
+        !remainingWord.includes(answer[i].value)
+      ) {
+        finalAnswer[i].state = "incorrect";
+        checkedAnswerIdx.push(i);
+      }
+    }
+
+    // 2.2 Handle the remaining which are either wrong position or duplicates.
+    let wrongPositionWordsChecked = "";
+    for (let i = 0; i < answer.length; i++) {
+      let noLettersInRemaining = numberOfLetterInWord(
+        answer[i].value,
+        remainingWord
+      );
+      let noLettersInWrongPositionChecked = numberOfLetterInWord(
+        answer[i].value,
+        wrongPositionWordsChecked
+      );
+
+      if (
+        !checkedAnswerIdx.includes(i) &&
+        noLettersInWrongPositionChecked < noLettersInRemaining
+      ) {
+        finalAnswer[i].state = "incorrect_position";
+        wrongPositionWordsChecked += finalAnswer[i].value;
+      } else if (!checkedAnswerIdx.includes(i)) {
+        finalAnswer[i].state = "incorrect";
+      }
+    }
+
+    return finalAnswer;
   }
 
   useEffect(() => {
     async function handleKeyDown(e: KeyboardEvent) {
+      if (animating) return;
       const letters = "abcdefghijklmnopqrstuvwxyz";
       if (letters.includes(e.key)) {
         setCursor((c) => {
@@ -71,46 +105,29 @@ export default function Home() {
           answers[tries].filter((answer) => answer.value !== "").length ===
             WORDS[level].length
         ) {
-          let nCorrect = 0;
-          // to check for repeating alphabets
-          let possiblyCorrectLetters = "";
+          let checkedAnswer = checkAnswer(WORDS[level], answers[tries]);
+          setAnimating(true);
           for (let i = 0; i < answers[tries].length; i++) {
             await delay(300);
-            let letterToTest = answers[tries][i].value.toLowerCase();
-            if (letterToTest === WORD[i]) {
-              nCorrect += 1;
-              setAnswers((a) => {
-                const newAnswer = [...a];
-                newAnswer[tries][i].state = "correct";
-                return newAnswer;
-              });
-              possiblyCorrectLetters += letterToTest;
-            } else if (WORD.includes(letterToTest)) {
-              setAnswers((a) => {
-                const newAnswer = [...a];
-                if (
-                  possiblyCorrectLetters.includes(letterToTest) &&
-                  numOfLetterInWord(letterToTest, possiblyCorrectLetters) !==
-                    numOfLetterInWord(letterToTest, WORD)
-                ) {
-                  newAnswer[tries][i].state = "incorrect_position";
-                } else {
-                  newAnswer[tries][i].state = "incorrect";
-                }
-                return newAnswer;
-              });
-              possiblyCorrectLetters += letterToTest;
-            } else {
-              setAnswers((a) => {
-                const newAnswer = [...a];
-                newAnswer[tries][i].state = "incorrect";
-                return newAnswer;
-              });
-            }
+            setAnswers((a) => {
+              const newAnswer = [...a];
+              newAnswer[tries][i].state = checkedAnswer[i].state;
+              return newAnswer;
+            });
           }
           await delay(300);
-          if (nCorrect === WORD.length) {
+
+          if (checkedAnswer.map((ans) => ans.value).join("") === WORDS[level]) {
             // Correct! move on to the next level...
+            setCursor(0);
+            setTries(0);
+            if (level !== WORDS.length - 1) {
+              setAnswers(generateInitialAnswers(WORDS[level + 1], 6));
+              setLevel((l) => l + 1);
+            } else {
+              // complete game, come back tmr
+              // show summary
+            }
           } else {
             if (tries < 5) {
               setCursor(0);
@@ -120,19 +137,20 @@ export default function Home() {
               setGameOver(true);
             }
           }
+          setAnimating(false);
         }
       }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [answers, cursor, tries]);
+  }, [answers, cursor, tries, level, animating]);
 
   return (
     <div className="h-full w-full max-w-md mx-auto px-4 animate-fade-in-down">
       <div className="text-center">
         <h1 className="text-4xl font-bold pt-5">WORDDDLE</h1>
-        <h2 className="text-2xl">Level 1</h2>
+        <h2 className="text-2xl">Level {level + 1}</h2>
       </div>
       <div className="pt-10" />
       {answers.map((answer, aId) => {

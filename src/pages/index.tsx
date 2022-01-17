@@ -7,7 +7,7 @@ import {
 import type { Answer } from "../utils/types";
 
 // WORDS should come from API fetch
-const WORDS = ["local", "toggle", "achieve", "academic"];
+const WORDS = ["bay", "hawk", "local", "toggle", "achieve", "academic"];
 
 export default function Home() {
   const [level, setLevel] = useState(0);
@@ -19,7 +19,6 @@ export default function Home() {
   const [animating, setAnimating] = useState(false);
   const [gameOver, setGameOver] = useState(false);
 
-  // pure function here:
   function checkAnswer(word: String, answer: Answer[]): Answer[] {
     // create a final answer with NEW objects so we don't mutate the original state by accident.
     let finalAnswer: Answer[] = answer.map((ans) => ({ ...ans }));

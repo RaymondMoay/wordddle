@@ -12,3 +12,14 @@ Super simple tech stack and really just a react UI exercise here. A sunday-fun-d
 - NextJS + React + Typescript
 - Google Sheets API (My super basic CMS to manually key in words... for now)
 - Vercel
+- Tailwind
+
+## Todos:
+
+- [ ] Move on to next level
+- [ ] Store past answers for summary page
+- [ ] Connect to GSheet API + getStaticProps to load data and regenerate everyday
+- [ ] Overlay component for
+  - [ ] Game over
+  - [ ] Game won
+  - [ ] Game instructions

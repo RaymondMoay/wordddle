@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { delay } from "../utils/delay";
+import { delay } from "../utils/helpers";
 
 type Answer = {
   value: string;
@@ -7,6 +7,7 @@ type Answer = {
 };
 
 const WORD = "lunar"; // this should come from static props reading Excel's APIs
+const WORDS = ["lunar", "toggle", "achieve", "academic"];
 const BASE_ANSWER: Answer = {
   value: "",
   state: null,
@@ -25,6 +26,7 @@ export default function Home() {
     }
     return initial;
   }, []);
+  const [level, setLevel] = useState(0);
   const [tries, setTries] = useState(0);
   const [cursor, setCursor] = useState(0);
   const [answers, setAnswers] = useState<Answer[][]>(initArr);
@@ -43,13 +45,13 @@ export default function Home() {
       const letters = "abcdefghijklmnopqrstuvwxyz";
       if (letters.includes(e.key)) {
         setCursor((c) => {
-          if (c < WORD.length) {
+          if (c < WORDS[level].length) {
             const newAnswers = [...answers];
             newAnswers[tries][cursor].value = e.key;
             setAnswers(newAnswers);
             return c + 1;
           }
-          return WORD.length;
+          return WORDS[level].length;
         });
       }
       if (e.key === "Backspace") {
@@ -67,7 +69,7 @@ export default function Home() {
         if (
           tries <= 5 &&
           answers[tries].filter((answer) => answer.value !== "").length ===
-            WORD.length
+            WORDS[level].length
         ) {
           let nCorrect = 0;
           // to check for repeating alphabets
@@ -140,7 +142,7 @@ export default function Home() {
               return (
                 <div
                   key={lId}
-                  className={`w-14 h-14 border ${
+                  className={`w-10 h-10 md:w-14 md:h-14 border ${
                     tries === aId ? "border-gray-500" : "border-gray-300"
                   } rounded-[5px] text-3xl flex items-center justify-center ${
                     letter.state === "correct"
